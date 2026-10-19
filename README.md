@@ -8,9 +8,22 @@ PDF をアップロードして日本語で質問すると、文書の中から�
 - 💸 **API キー無しでも動作**: キーが無い場合は検索結果をそのまま表示する「抽出モード」で、完全無料で試せます
 - 📎 **出典表示**: 回答ごとに参照したファイル名・ページ番号と、検索されたチャンク・類似度スコアを確認できます
 
-![アプリのスクリーンショット](docs/screenshot.png)
+**生成モード（Gemini `gemini-3.5-flash-lite`）の実際の画面**: 回答に出典番号が付き、資料に無い質問には「わからない」と答えています。
 
-<!-- スクリーンショットを差し替える場合は docs/screenshot.png を上書きしてください（scripts/take_screenshot.py で自動撮影できます） -->
+![Gemini による回答のスクリーンショット](docs/screenshot.png)
+
+<details>
+<summary>API キー無し（抽出モード）の画面</summary>
+
+![抽出モードのスクリーンショット](docs/screenshot_extractive.png)
+
+</details>
+
+> ✅ **動作確認済み**: サンプル PDF に対して Gemini（`gemini-3.5-flash-lite`）で実際に回答を生成し、
+> 資料にある 6 問はすべて正しい条文を引用して回答、資料に無い 1 問（社員食堂）は「わからない」と回答することを確認しました。
+> 結果は [docs/demo_output_gemini.txt](docs/demo_output_gemini.txt) にあります（2026年10月）。
+
+<!-- スクリーンショットは scripts/take_screenshot.py で自動撮影できます -->
 
 ---
 
@@ -35,7 +48,7 @@ PDF をアップロードして日本語で質問すると、文書の中から�
 | --- | --- |
 | PDF アップロード | 複数ファイルを同時に登録可能。サンプル PDF（架空の会社の就業規則・社内FAQ）も同梱 |
 | チャット形式の Q&A | 会話履歴を保持し、質問ごとに検索→回答 |
-| 出典表示 | 「ファイル名 p.ページ番号」を回答の下に表示 |
+| 出典表示 | 回答が実際に参照した資料（[1] などの番号）だけを「ファイル名 p.ページ番号」で表示。「わからない」のときは出典なし |
 | 検索結果の可視化 | 取り出したチャンクの本文と類似度スコアを展開表示 |
 | 2 つの動作モード | **生成モード**（Gemini が回答を作成）/ **抽出モード**（API キー不要・関連箇所を表示） |
 | パラメータ調整 | サイドバーでチャンクサイズ・オーバーラップ・top-k・モデルを変更可能 |
@@ -183,7 +196,8 @@ streamlit run app.py
 画面なしでパイプラインだけ確認したい場合:
 
 ```bash
-python scripts/demo_pipeline.py   # API キー不要。結果例は docs/demo_output.txt
+python scripts/demo_pipeline.py   # 検索のみ（API キー不要）。結果例は docs/demo_output.txt
+python scripts/demo_gemini.py     # 検索＋Gemini で回答生成（要 GEMINI_API_KEY）。結果例は docs/demo_output_gemini.txt
 ```
 
 ## 設計上の判断
@@ -225,7 +239,7 @@ python -m pytest -v
 
 - `tests/test_chunker.py`: 文分割、サイズ上限、オーバーラップ、長文の強制分割、ページ情報の保持、PDF テキスト整形
 - `tests/test_retriever.py`: 文字の出現回数で作る **軽量な偽の埋め込み（FakeEmbedder）** を使い、モデルをダウンロードせずに検索の順位・スコア・top-k を検証（1 秒未満で完了）
-- `tests/test_llm.py`: API を呼ばない部分（プロンプト作成・抽出モードの出力）
+- `tests/test_llm.py`: API を呼ばない部分（プロンプト作成・抽出モードの出力・回答中の参照番号の抽出・「わからない」の判定）
 
 ## ディレクトリ構成
 
@@ -243,14 +257,17 @@ rag-doc-qa/
 ├── tests/                     # pytest（偽の埋め込みで高速）
 ├── scripts/
 │   ├── make_sample_pdf.py     # サンプル PDF の生成（reportlab）
-│   ├── demo_pipeline.py       # 画面なしでパイプラインを確認
+│   ├── demo_pipeline.py       # 画面なしで検索までを確認（キー不要）
+│   ├── demo_gemini.py         # 画面なしで Gemini の回答生成まで確認
 │   └── take_screenshot.py     # README 用スクリーンショットの自動撮影
 ├── sample_docs/
 │   └── sample_company_rules.pdf  # 架空企業の就業規則・FAQ（公開可）
 ├── docs/
 │   ├── EXPLAIN.md             # 各モジュールの解説と想定質問集
 │   ├── demo_output.txt        # demo_pipeline.py の実行結果
-│   └── screenshot.png
+│   ├── demo_output_gemini.txt # demo_gemini.py の実行結果
+│   ├── screenshot.png         # 生成モードの画面
+│   └── screenshot_extractive.png  # 抽出モードの画面
 ├── .streamlit/
 │   ├── config.toml            # Streamlit の設定（秘密情報なし）
 │   └── secrets.toml.example   # secrets.toml のひな形

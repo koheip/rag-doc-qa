@@ -26,7 +26,7 @@ from src.config import (
     GEMINI_MODELS,
 )
 from src.embedder import E5Embedder
-from src.llm import extractive_answer, format_citation, generate_answer
+from src.llm import cited_indices, extractive_answer, format_citation, generate_answer
 from src.loader import load_pdf
 from src.retriever import RetrievedChunk, Retriever
 
@@ -72,12 +72,18 @@ def build_index(files: list[tuple[str, bytes]], chunk_size: int, overlap: int) -
     return retriever
 
 
-def render_sources(contexts: list[RetrievedChunk]) -> None:
-    """出典の一覧と、検索されたチャンクの中身（展開表示）を描画する。"""
+def render_sources(contexts: list[RetrievedChunk], cited: list[int]) -> None:
+    """出典（回答が実際に参照した資料）と、検索されたチャンクの中身（展開表示）を描画する。
+
+    cited は回答中の参照番号（[1] なら 1）。検索しただけで回答に使われなかった資料は
+    出典には出さず、展開表示の中でだけ確認できるようにする。
+    """
     if not contexts:
         return
-    citations = sorted({format_citation(c) for c in contexts})
-    st.caption("📎 出典: " + " / ".join(citations))
+    if cited:
+        st.caption("📎 出典: " + " / ".join(f"[{i}] {format_citation(contexts[i - 1])}" for i in cited))
+    else:
+        st.caption("📎 出典: なし（資料から該当する記述が見つかりませんでした）")
     with st.expander(f"🔍 検索されたチャンク（{len(contexts)} 件）を見る"):
         for i, item in enumerate(contexts, start=1):
             st.markdown(f"**[{i}] {format_citation(item)}** — 類似度 `{item.score:.3f}`")
@@ -170,7 +176,7 @@ st.divider()
 for msg in st.session_state.messages:
     with st.chat_message(msg["role"]):
         st.markdown(msg["content"])
-        render_sources(msg.get("contexts", []))
+        render_sources(msg.get("contexts", []), msg.get("cited", []))
 
 placeholder = "例：有給休暇は何日前までに申請すればいいですか？" if retriever else "先にインデックスを作成してください"
 if question := st.chat_input(placeholder, disabled=retriever is None):
@@ -184,10 +190,13 @@ if question := st.chat_input(placeholder, disabled=retriever is None):
             contexts = retriever.retrieve(question, top_k=top_k)
 
         # 2. 生成（Generation）。キーが無ければ抽出モード
+        # 抽出モードでは、表示した上位2件をそのまま出典とする
+        cited = list(range(1, min(2, len(contexts)) + 1))
         if api_key:
             try:
                 with st.spinner(f"{model_name} で回答を生成中..."):
                     answer = generate_answer(question, contexts, api_key=api_key, model=model_name)
+                cited = cited_indices(answer, len(contexts))
             except Exception as e:  # キー間違い・レート制限など
                 answer = (
                     f"⚠️ Gemini の呼び出しに失敗したため、抽出モードで表示します。（{type(e).__name__}）\n\n"
@@ -200,6 +209,6 @@ if question := st.chat_input(placeholder, disabled=retriever is None):
             )
 
         st.markdown(answer)
-        render_sources(contexts)
+        render_sources(contexts, cited)
 
-    st.session_state.messages.append({"role": "assistant", "content": answer, "contexts": contexts})
+    st.session_state.messages.append({"role": "assistant", "content": answer, "contexts": contexts, "cited": cited})

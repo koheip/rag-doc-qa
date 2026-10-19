@@ -9,13 +9,15 @@
 
 from __future__ import annotations
 
+import re
+
 from src.config import GEMINI_MODELS
 from src.retriever import RetrievedChunk
 
 SYSTEM_PROMPT = """あなたは社内ドキュメントに関する質問に答えるアシスタントです。
 以下のルールを必ず守ってください。
 1. 回答は【参考資料】に書かれている内容だけを根拠にしてください。あなた自身の知識で補ってはいけません。
-2. 【参考資料】に答えが書かれていない場合は、推測せずに「わからない」とだけ答えてください。
+2. 【参考資料】に答えが書かれていない場合は、推測せずに「わからない」とだけ答えてください（この場合は資料番号を付けないでください）。
 3. 回答の文末には、根拠にした資料の番号を [1] [2] のように付けてください。
 4. 日本語で、簡潔かつ丁寧に答えてください。"""
 
@@ -23,6 +25,29 @@ SYSTEM_PROMPT = """あなたは社内ドキュメントに関する質問に答�
 def format_citation(item: RetrievedChunk) -> str:
     """出典を「ファイル名 p.ページ」の形式で表す。"""
     return f"{item.chunk.source} p.{item.chunk.page}"
+
+
+UNKNOWN_ANSWER = "わからない（資料に該当する記述が見つかりませんでした）"
+
+
+def is_unknown(answer: str) -> bool:
+    """回答が「わからない」だけの回答かどうかを判定する（参照番号や句読点は無視）。
+
+    「わからない」「わからないです」「わからない（〜）」は該当、
+    「わからない点は人事部へ…」のような普通の文は該当しない。
+    """
+    cleaned = re.sub(r"\[\d+\]|[\s。、.]", "", answer)
+    return re.fullmatch(r"わからない(です)?(（.*）)?", cleaned) is not None
+
+
+def cited_indices(answer: str, num_contexts: int) -> list[int]:
+    """回答文中の [1] [2] のような参照番号を取り出す（1始まり・重複なし・範囲外は無視）。
+
+    LLM が実際に根拠として使った資料だけを「出典」として表示するために使います。
+    「わからない」と答えた場合は参照番号が無いので、空のリストになります。
+    """
+    numbers = [int(n) for n in re.findall(r"\[(\d+)\]", answer)]
+    return sorted({n for n in numbers if 1 <= n <= num_contexts})
 
 
 def build_prompt(question: str, contexts: list[RetrievedChunk]) -> str:
@@ -41,7 +66,7 @@ def generate_answer(
 ) -> str:
     """Gemini に問い合わせて、資料に基づいた回答を生成する。"""
     if not contexts:
-        return "わからない（関連する資料が見つかりませんでした）"
+        return UNKNOWN_ANSWER
 
     # google-genai は公式の新しい SDK（旧 google-generativeai の後継）
     from google import genai
@@ -56,7 +81,11 @@ def generate_answer(
             temperature=0.1,  # 低めにして、資料に忠実で安定した回答にする
         ),
     )
-    return (response.text or "").strip() or "わからない（回答を生成できませんでした）"
+    answer = (response.text or "").strip()
+    # 「わからない [1][2]」のように、わからないのに番号を付けてしまう場合があるので表記をそろえる
+    if not answer or is_unknown(answer):
+        return UNKNOWN_ANSWER
+    return answer
 
 
 def extractive_answer(contexts: list[RetrievedChunk], max_items: int = 2) -> str:

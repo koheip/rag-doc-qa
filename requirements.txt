@@ -1,0 +1,16 @@
+# --- アプリ本体 ---
+streamlit==1.66.0
+pypdf==6.21.1
+sentence-transformers==6.1.0
+faiss-cpu==1.15.1
+numpy==2.5.4
+google-genai==2.31.0
+python-dotenv==1.2.4
+
+# --- サンプルPDF生成・テスト ---
+reportlab==5.0.1
+pytest==9.1.1
+
+# 補足: torch は sentence-transformers と一緒に自動で入ります。
+# GPU 不要なので、容量を抑えたい場合は先に CPU 版を入れておくと軽くなります:
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu

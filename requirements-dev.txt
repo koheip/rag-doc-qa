@@ -1,0 +1,3 @@
+# スクリーンショット自動撮影用（任意）
+-r requirements.txt
+playwright==1.64.0

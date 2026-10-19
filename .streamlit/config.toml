@@ -1,0 +1,14 @@
+# Streamlit の設定ファイル（秘密情報は含まないので Git 管理してOK）
+
+[server]
+# transformers は多数のモジュールを遅延読み込みするため、Streamlit のファイル監視が
+# 起動時に大量のエラーログを出すことがある。デモ用途なので監視を無効化しておく。
+# （コード編集→自動リロードを使いたい場合は "auto" に変更）
+fileWatcherType = "none"
+
+[client]
+# 右上の「Deploy」ボタンなど開発者向けメニューを隠す
+toolbarMode = "minimal"
+
+[browser]
+gatherUsageStats = false

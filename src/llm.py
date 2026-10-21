@@ -1,8 +1,9 @@
-"""検索したチャンクを根拠に、Gemini で回答を生成するモジュール。
+"""検索したチャンクを根拠に、LLM で回答を生成するモジュール。
 
 ポイント:
   - プロンプトで「与えた資料だけを根拠に答える」「無ければ『わからない』と言う」と
     指示することで、もっともらしい嘘（ハルシネーション）を減らします。
+  - LLM の呼び出し自体は src/llm_client.py に分けてあるので、Gemini 以外にも差し替えられます。
   - API キーが無い場合は LLM を使わず、検索結果をそのまま見せる
     「抽出モード」で動きます（費用ゼロでデモできるようにするため）。
 """
@@ -11,7 +12,7 @@ from __future__ import annotations
 
 import re
 
-from src.config import GEMINI_MODELS
+from src.llm_client import LLMClient, LLMResponse
 from src.retriever import RetrievedChunk
 
 SYSTEM_PROMPT = """あなたは社内ドキュメントに関する質問に答えるアシスタントです。
@@ -58,34 +59,23 @@ def build_prompt(question: str, contexts: list[RetrievedChunk]) -> str:
     return f"【参考資料】\n{context_text}\n\n【質問】\n{question}"
 
 
-def generate_answer(
-    question: str,
-    contexts: list[RetrievedChunk],
-    api_key: str,
-    model: str = GEMINI_MODELS[0],
-) -> str:
-    """Gemini に問い合わせて、資料に基づいた回答を生成する。"""
+def generate_answer(question: str, contexts: list[RetrievedChunk], llm: LLMClient) -> LLMResponse:
+    """LLM に問い合わせて、資料に基づいた回答を生成する。
+
+    戻り値の LLMResponse には、回答テキストに加えてトークン数・応答時間が入っています。
+    """
     if not contexts:
-        return UNKNOWN_ANSWER
+        return LLMResponse(text=UNKNOWN_ANSWER, model=llm.model)
 
-    # google-genai は公式の新しい SDK（旧 google-generativeai の後継）
-    from google import genai
-    from google.genai import types
-
-    client = genai.Client(api_key=api_key)
-    response = client.models.generate_content(
-        model=model,
-        contents=build_prompt(question, contexts),
-        config=types.GenerateContentConfig(
-            system_instruction=SYSTEM_PROMPT,
-            temperature=0.1,  # 低めにして、資料に忠実で安定した回答にする
-        ),
+    response = llm.generate(
+        build_prompt(question, contexts),
+        system_prompt=SYSTEM_PROMPT,
+        temperature=0.1,  # 低めにして、資料に忠実で安定した回答にする
     )
-    answer = (response.text or "").strip()
     # 「わからない [1][2]」のように、わからないのに番号を付けてしまう場合があるので表記をそろえる
-    if not answer or is_unknown(answer):
-        return UNKNOWN_ANSWER
-    return answer
+    if not response.text or is_unknown(response.text):
+        response.text = UNKNOWN_ANSWER
+    return response
 
 
 def extractive_answer(contexts: list[RetrievedChunk], max_items: int = 2) -> str:

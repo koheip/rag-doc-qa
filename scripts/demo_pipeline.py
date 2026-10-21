@@ -21,7 +21,7 @@ from src.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE  # noqa: E402
 from src.embedder import E5Embedder  # noqa: E402
 from src.llm import extractive_answer, format_citation  # noqa: E402
 from src.loader import load_pdf  # noqa: E402
-from src.retriever import Retriever  # noqa: E402
+from src.retriever import create_retriever  # noqa: E402
 
 QUESTIONS = [
     "有給休暇は何日前までに申請する必要がありますか？",
@@ -41,7 +41,7 @@ def main() -> None:
     print(f"ページ数: {len(pages)} / チャンク数: {len(chunks)}")
 
     start = time.time()
-    retriever = Retriever(E5Embedder())
+    retriever = create_retriever("dense", E5Embedder())
     retriever.index(chunks)
     print(f"インデックス作成: {time.time() - start:.1f} 秒\n")
 

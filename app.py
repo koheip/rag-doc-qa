@@ -27,8 +27,9 @@ from src.config import (
 )
 from src.embedder import E5Embedder
 from src.llm import cited_indices, extractive_answer, format_citation, generate_answer
+from src.llm_client import GeminiClient
 from src.loader import load_pdf
-from src.retriever import RetrievedChunk, Retriever
+from src.retriever import RETRIEVAL_STRATEGIES, RetrievedChunk, Retriever, create_retriever
 
 # .env ファイルがあれば、その中身を環境変数として読み込む（GEMINI_API_KEY など）
 load_dotenv()
@@ -61,13 +62,13 @@ def get_api_key(sidebar_input: str) -> str | None:
     return sidebar_input or None
 
 
-def build_index(files: list[tuple[str, bytes]], chunk_size: int, overlap: int) -> Retriever:
-    """PDF 群を読み込み → チャンク分割 → ベクトル化して検索器を作る。"""
+def build_index(files: list[tuple[str, bytes]], chunk_size: int, overlap: int, strategy: str) -> Retriever:
+    """PDF 群を読み込み → チャンク分割 → 指定した戦略の検索器に登録する。"""
     pages = []
     for name, data in files:
         pages.extend(load_pdf(data, source_name=name))
     chunks = chunk_pages(pages, chunk_size=chunk_size, overlap=overlap)
-    retriever = Retriever(get_embedder())
+    retriever = create_retriever(strategy, get_embedder())
     retriever.index(chunks)
     return retriever
 
@@ -121,6 +122,12 @@ with st.sidebar:
     chunk_size = st.slider("チャンクサイズ（文字数）", 100, 1000, DEFAULT_CHUNK_SIZE, step=50)
     overlap = st.slider("オーバーラップ（文字数）", 0, chunk_size // 2, min(DEFAULT_CHUNK_OVERLAP, chunk_size // 2), step=10)
     top_k = st.slider("取得するチャンク数（top-k）", 1, 10, DEFAULT_TOP_K)
+    strategy = st.selectbox(
+        "検索方式",
+        RETRIEVAL_STRATEGIES,
+        format_func=lambda s: {"dense": "dense（ベクトル検索）", "hybrid": "hybrid（BM25＋ベクトル）"}[s],
+        help="hybrid は src/bm25.py を実装すると使えるようになります。",
+    )
     st.caption("※ チャンクサイズ・オーバーラップを変えたら、インデックスを作り直してください。")
 
     if st.button("🗑️ 会話をリセット", width="stretch"):
@@ -152,9 +159,11 @@ if st.button("📚 インデックスを作成", type="primary"):
     else:
         try:
             with st.spinner("PDF を読み込み、ベクトル化しています..."):
-                st.session_state.retriever = build_index(files, chunk_size, overlap)
+                st.session_state.retriever = build_index(files, chunk_size, overlap, strategy)
             st.session_state.indexed_files = [name for name, _ in files]
             st.session_state.messages = []
+        except NotImplementedError:
+            st.error("hybrid 検索はまだ実装されていません（src/bm25.py の TODO を実装してください）。dense を選んでください。")
         except ValueError:
             st.error("PDF からテキストを取り出せませんでした（画像だけの PDF は未対応です）。")
 
@@ -192,11 +201,17 @@ if question := st.chat_input(placeholder, disabled=retriever is None):
         # 2. 生成（Generation）。キーが無ければ抽出モード
         # 抽出モードでは、表示した上位2件をそのまま出典とする
         cited = list(range(1, min(2, len(contexts)) + 1))
+        usage = ""
         if api_key:
             try:
                 with st.spinner(f"{model_name} で回答を生成中..."):
-                    answer = generate_answer(question, contexts, api_key=api_key, model=model_name)
+                    response = generate_answer(question, contexts, GeminiClient(api_key, model_name))
+                answer = response.text
                 cited = cited_indices(answer, len(contexts))
+                usage = (
+                    f"⏱️ {response.latency_s:.1f} 秒 ・ 入力 {response.input_tokens:,} / "
+                    f"出力 {response.output_tokens:,} トークン（{response.model}）"
+                )
             except Exception as e:  # キー間違い・レート制限など
                 answer = (
                     f"⚠️ Gemini の呼び出しに失敗したため、抽出モードで表示します。（{type(e).__name__}）\n\n"
@@ -210,5 +225,7 @@ if question := st.chat_input(placeholder, disabled=retriever is None):
 
         st.markdown(answer)
         render_sources(contexts, cited)
+        if usage:
+            st.caption(usage)
 
     st.session_state.messages.append({"role": "assistant", "content": answer, "contexts": contexts, "cited": cited})

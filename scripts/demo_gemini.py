@@ -25,8 +25,9 @@ from src.chunker import chunk_pages  # noqa: E402
 from src.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, DEFAULT_TOP_K, GEMINI_MODELS  # noqa: E402
 from src.embedder import E5Embedder  # noqa: E402
 from src.llm import format_citation, generate_answer  # noqa: E402
+from src.llm_client import GeminiClient  # noqa: E402
 from src.loader import load_pdf  # noqa: E402
-from src.retriever import Retriever  # noqa: E402
+from src.retriever import create_retriever  # noqa: E402
 
 OUTPUT = ROOT / "docs" / "demo_output_gemini.txt"
 
@@ -39,14 +40,14 @@ def main() -> None:
     model = sys.argv[1] if len(sys.argv) > 1 else GEMINI_MODELS[0]
 
     pages = load_pdf(ROOT / "sample_docs" / "sample_company_rules.pdf")
-    retriever = Retriever(E5Embedder())
+    retriever = create_retriever("dense", E5Embedder())
     retriever.index(chunk_pages(pages, DEFAULT_CHUNK_SIZE, DEFAULT_CHUNK_OVERLAP))
 
     lines = [f"モデル: {model} / top-k: {DEFAULT_TOP_K} / チャンク: {DEFAULT_CHUNK_SIZE}文字（重なり{DEFAULT_CHUNK_OVERLAP}）", ""]
     for q in QUESTIONS:
         contexts = retriever.retrieve(q, top_k=DEFAULT_TOP_K)
         start = time.time()
-        answer = generate_answer(q, contexts, api_key=api_key, model=model)
+        answer = generate_answer(q, contexts, GeminiClient(api_key, model)).text
         lines += [
             "=" * 70,
             f"Q: {q}",

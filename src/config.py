@@ -11,6 +11,7 @@ EMBEDDING_MODEL_NAME = "intfloat/multilingual-e5-small"
 #   新規プロジェクト向けに推奨されている 3.5 Flash-Lite をデフォルトにしています。
 GEMINI_MODELS = [
     "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
     "gemini-3.8-flash",
     "gemini-2.5-flash",
 ]

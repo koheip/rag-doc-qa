@@ -4,33 +4,11 @@
 ベクトルを作る簡単な偽物（FakeEmbedder）を使って高速にテストします。
 """
 
-import numpy as np
 import pytest
 
 from src.chunker import Chunk
-from src.retriever import Retriever
-
-
-class FakeEmbedder:
-    """各文字をハッシュで次元に割り当て、出現回数を数えるだけの埋め込み。
-
-    同じ文字を多く含む文章ほど類似度が高くなるので、検索の動作確認には十分です。
-    """
-
-    dim = 256
-
-    def _embed(self, text: str) -> np.ndarray:
-        vec = np.zeros(self.dim, dtype="float32")
-        for ch in text:
-            vec[ord(ch) % self.dim] += 1.0
-        norm = np.linalg.norm(vec)
-        return vec / norm if norm else vec
-
-    def embed_documents(self, texts):
-        return np.stack([self._embed(t) for t in texts])
-
-    def embed_query(self, text):
-        return self._embed(text)
+from src.retriever import DenseRetriever, create_retriever
+from tests.fakes import FakeEmbedder
 
 
 @pytest.fixture
@@ -40,7 +18,7 @@ def retriever():
         Chunk("給与は毎月25日に振り込まれます。", "rules.pdf", 3, 1),
         Chunk("健康診断は毎年10月に実施します。", "faq.pdf", 1, 2),
     ]
-    r = Retriever(FakeEmbedder())
+    r = DenseRetriever(FakeEmbedder())
     r.index(chunks)
     return r
 
@@ -69,9 +47,18 @@ def test_top_k_is_capped_by_number_of_chunks(retriever):
 
 def test_retrieve_before_index_raises():
     with pytest.raises(RuntimeError):
-        Retriever(FakeEmbedder()).retrieve("質問")
+        DenseRetriever(FakeEmbedder()).retrieve("質問")
 
 
 def test_index_empty_raises():
     with pytest.raises(ValueError):
-        Retriever(FakeEmbedder()).index([])
+        DenseRetriever(FakeEmbedder()).index([])
+
+
+def test_create_retriever_dense():
+    assert isinstance(create_retriever("dense", FakeEmbedder()), DenseRetriever)
+
+
+def test_create_retriever_unknown_strategy():
+    with pytest.raises(ValueError):
+        create_retriever("unknown", FakeEmbedder())

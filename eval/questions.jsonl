@@ -1,0 +1,30 @@
+{"id": "q01", "type": "fact", "question": "有給休暇は何日前までに申請する必要がありますか？", "evidence": [{"page": 2, "keyword": "3営業日前までに勤怠システム"}], "reference_answer": "原則として取得希望日の3営業日前までに、勤怠システムから申請する。急病などやむを得ない場合は当日申請も可。"}
+{"id": "q02", "type": "paraphrase", "question": "給料日はいつですか？", "evidence": [{"page": 3, "keyword": "翌月25日に従業員指定"}], "reference_answer": "毎月末日締め・翌月25日払い。25日が銀行休業日の場合は前営業日に支払われる。"}
+{"id": "q03", "type": "paraphrase", "question": "ボーナスは年に何回、いつ出ますか？", "evidence": [{"page": 6, "keyword": "賞与は毎年6月と12月"}], "reference_answer": "年2回、6月と12月に支給される。"}
+{"id": "q04", "type": "paraphrase", "question": "在宅勤務は週に何日までできますか？", "evidence": [{"page": 1, "keyword": "週3日までリモートワーク"}], "reference_answer": "上長の承認を得たうえで、週3日まで。"}
+{"id": "q05", "type": "paraphrase", "question": "家で仕事をする場合、何か手当はもらえますか？", "evidence": [{"page": 1, "keyword": "リモートワーク手当として月額5,000円"}], "reference_answer": "リモートワーク手当として月額5,000円が支給される。"}
+{"id": "q06", "type": "paraphrase", "question": "毎日の通勤にかかる交通費は、いくらまで出してもらえますか？", "evidence": [{"page": 3, "keyword": "上限は月額3万円"}], "reference_answer": "最も経済的かつ合理的な経路の実費が支給され、上限は月額3万円。"}
+{"id": "q07", "type": "paraphrase", "question": "会社を辞めたいときは、いつまでに伝えればいいですか？", "evidence": [{"page": 5, "keyword": "1か月前までに退職届"}], "reference_answer": "退職希望日の1か月前までに退職届を上長に提出する。"}
+{"id": "q08", "type": "paraphrase", "question": "ChatGPTのようなAIツールを仕事で使っても大丈夫ですか？", "evidence": [{"page": 4, "keyword": "会社が承認したツールのみ"}], "reference_answer": "会社が承認したツールのみ使用可能。顧客の個人情報や機密情報を入力してはいけない。"}
+{"id": "q09", "type": "fact", "question": "フレックスタイム制のコアタイムは何時から何時までですか？", "evidence": [{"page": 1, "keyword": "午前11時から午後3時"}], "reference_answer": "午前11時から午後3時まで。"}
+{"id": "q10", "type": "reasoning", "question": "入社してすぐに有給休暇はもらえますか？", "evidence": [{"page": 2, "keyword": "6か月間継続勤務した従業員には、10日"}], "reference_answer": "入社直後はもらえない。入社日から6か月間継続勤務すると10日付与される。"}
+{"id": "q11", "type": "multi", "question": "結婚したら何日休めますか？また、お祝い金はいくらもらえますか？", "evidence": [{"page": 2, "keyword": "本人が結婚するときは5日"}, {"page": 7, "keyword": "結婚時には5万円"}], "reference_answer": "特別休暇（有給）が5日、お祝い金（慶弔見舞金）が5万円。"}
+{"id": "q12", "type": "fact", "question": "立て替えた経費の精算はいつまでに申請すればいいですか？", "evidence": [{"page": 3, "keyword": "翌月10日までに経費精算"}], "reference_answer": "発生月の翌月10日までに、領収書を添えて経費精算システムで申請する。"}
+{"id": "q13", "type": "paraphrase", "question": "仕事で使う技術書を買ったら、会社がお金を出してくれますか？", "evidence": [{"page": 3, "keyword": "年間10万円まで"}], "reference_answer": "業務に関連する書籍代は年間10万円まで会社が負担する。"}
+{"id": "q14", "type": "fact", "question": "東京に出張して泊まる場合、ホテル代はいくらまで出ますか？", "evidence": [{"page": 8, "keyword": "上限は14,000円"}], "reference_answer": "東京23区内の宿泊は1泊14,000円が上限（実費支給）。"}
+{"id": "q15", "type": "fact", "question": "泊まりがけの出張の日当はいくらですか？", "evidence": [{"page": 8, "keyword": "宿泊を伴う出張は1日2,000円"}], "reference_answer": "1日2,000円。"}
+{"id": "q16", "type": "fact", "question": "出張の申請は何日前までに出す必要がありますか？", "evidence": [{"page": 8, "keyword": "5営業日前までに出張申請書"}], "reference_answer": "出発日の5営業日前までに出張申請書を提出し、部門長の承認を得る。"}
+{"id": "q17", "type": "reasoning", "question": "出張で新幹線のグリーン車に乗ってもいいですか？", "evidence": [{"page": 8, "keyword": "新幹線は普通車指定席"}], "reference_answer": "原則として不可。新幹線は普通車指定席を利用する。"}
+{"id": "q18", "type": "paraphrase", "question": "給料が上がるのは何月ですか？", "evidence": [{"page": 6, "keyword": "毎年4月に行う"}], "reference_answer": "昇給は原則として年1回、毎年4月。"}
+{"id": "q19", "type": "fact", "question": "人事評価は何段階で決まりますか？", "evidence": [{"page": 6, "keyword": "S・A・B・C・Dの5段階"}], "reference_answer": "S・A・B・C・Dの5段階。"}
+{"id": "q20", "type": "paraphrase", "question": "会社の近くに住んでいると家賃の補助はありますか？", "evidence": [{"page": 7, "keyword": "半径5km以内"}], "reference_answer": "本社から半径5km以内に住む場合、住宅手当として月額2万円が支給される。"}
+{"id": "q21", "type": "fact", "question": "応用情報技術者試験に合格したら、何か支援はありますか？", "evidence": [{"page": 7, "keyword": "合格祝い金として1万円"}], "reference_answer": "受験料の全額補助に加え、合格祝い金1万円が支給される。"}
+{"id": "q22", "type": "paraphrase", "question": "PCが壊れてしまいました。どこに連絡すればいいですか？", "evidence": [{"page": 9, "keyword": "内線1234"}], "reference_answer": "情報システム部のヘルプデスク（内線1234）。代替機は原則当日中に貸し出される。"}
+{"id": "q23", "type": "fact", "question": "引っ越しをしたらどんな手続きが必要ですか？", "evidence": [{"page": 10, "keyword": "2週間以内に、人事システムで住所変更"}], "reference_answer": "引っ越し後2週間以内に、人事システムで住所変更と通勤経路の変更を申請する。"}
+{"id": "q24", "type": "fact", "question": "業務システムのパスワードは何文字以上にする必要がありますか？", "evidence": [{"page": 4, "keyword": "12文字以上"}], "reference_answer": "12文字以上。"}
+{"id": "q25", "type": "paraphrase", "question": "育休は子どもが何歳になるまで取れますか？", "evidence": [{"page": 5, "keyword": "1歳6か月になるまで"}], "reference_answer": "子が1歳6か月になるまで取得できる。"}
+{"id": "q26", "type": "paraphrase", "question": "社外秘の資料を家のプリンターで印刷してもいいですか？", "evidence": [{"page": 11, "keyword": "自宅を含め社外で印刷することを禁止"}], "reference_answer": "禁止されている。印刷が必要な場合は出社する。"}
+{"id": "q27", "type": "unanswerable", "question": "社員食堂のメニューを教えてください。", "evidence": [], "reference_answer": "資料に記載がないため、わからない。"}
+{"id": "q28", "type": "unanswerable", "question": "使わなかった有給休暇は会社に買い取ってもらえますか？", "evidence": [], "reference_answer": "資料に記載がないため、わからない。"}
+{"id": "q29", "type": "unanswerable", "question": "退職金はいくらもらえますか？", "evidence": [], "reference_answer": "資料に記載がないため、わからない。"}
+{"id": "q30", "type": "unanswerable", "question": "服装の決まり（ドレスコード）はありますか？", "evidence": [], "reference_answer": "資料に記載がないため、わからない。"}
